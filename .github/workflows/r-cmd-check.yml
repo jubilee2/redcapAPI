@@ -1,13 +1,4 @@
-# This workflow uses actions that are not certified by GitHub.
-# They are provided by a third-party and are governed by
-# separate terms of service, privacy policy, and support
-# documentation.
-#
-# See https://github.com/r-lib/actions/tree/master/examples#readme for
-# additional example workflows available for the R community.
-
-name: R
-
+name: R CMD Check
 on:
   push:
     branches: [ "main" ]
@@ -22,7 +13,7 @@ jobs:
     runs-on: macos-latest
     strategy:
       matrix:
-        r-version: ['3.6.3', '4.1.1', '4.2.3', '4.4.1']
+        r-version: ['3.6.3', '4.1.2', '4.2.2', '4.3.2']
 
     steps:
       - uses: actions/checkout@v4
