@@ -5,10 +5,6 @@
 [![License: GPL v2](https://img.shields.io/badge/License-GPL_v2-blue.svg)](https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html)
 ![r-cmd-check.yml](https://github.com/vubiostat/redcapAPI/actions/workflows/r-cmd-check.yml/badge.svg?branch=main)
 
-
-
-
-
 redcapAPI
 =========
 
