@@ -1,0 +1,38 @@
+name: Unit Test
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+
+jobs:
+  R-Test-That:
+    runs-on: ${{ matrix.config.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          #- {os: macos-latest,   r: 'release'}
+          #- {os: windows-latest, r: 'release'}
+          - {os: ubuntu-latest,   r: 'release'}
+    env:
+      TESTREDCAPAPI: ${{ secrets.TESTREDCAPTOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: ${{ matrix.config.r }}
+          http-user-agent: ${{ matrix.config.http-user-agent }}
+          use-public-rspm: true
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: |
+            any::testthat
+            any::devtools
+          needs: check
+      - name: TestThat
+        run: devtools::test()
+        shell: Rscript {0}
