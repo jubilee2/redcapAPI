@@ -7,7 +7,11 @@ on:
 
 permissions:
   contents: read
-
+  
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+  
 jobs:
   R-Test-That:
     runs-on: ${{ matrix.config.os }}
@@ -18,7 +22,6 @@ jobs:
           - {os: macos-latest, r: 'release'}
           - {os: windows-latest, r: 'release'}
           - {os: ubuntu-latest, r: 'release'}
-    concurrency: ${{ github.run_id }}
     env:
       TESTREDCAPAPI: ${{ secrets.TESTREDCAPTOKEN }}
       CI: 1
