@@ -18,9 +18,6 @@ jobs:
           - {os: macos-latest, r: 'release'}
           - {os: windows-latest, r: 'release'}
           - {os: ubuntu-latest, r: 'release'}
-    concurrency:
-      group: 'test-that-group'
-      cancel-in-progress: false
     env:
       TESTREDCAPAPI: ${{ secrets.TESTREDCAPTOKEN }}
       CI: 1
