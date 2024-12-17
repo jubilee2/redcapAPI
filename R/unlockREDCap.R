@@ -17,7 +17,25 @@
   ###########################################################################
  ## Connection function
 ##
-.connectAndCheck <- function(key, url, ...)
+#' Connect to REDCap and verify connection
+#' 
+#' A function that given an API_KEY and a url will create a `redcapConnection`
+#' object and verify that it is working with a version call.
+#' If the API key is invalid it will return NULL.
+#' If the URL is invalid or there are multiple redirects it will call `stop`. 
+#' 
+#' @param key The API key used to connect.
+#' @param url The url of the REDCap server.
+#' @param ... Additional arguments passed to redcapConnection
+#' @return redcapConnection established or NULL if key is invalid.
+#' @seealso 
+#' [redcapConnection()]
+#' @export
+#' @examples
+#' \dontrun{
+#' connectAndCheck("<AN API KEY HERE>", "<REDCAP URL HERE>")
+#' }
+connectAndCheck <- function(key, url, ...)
 {
   tryCatch(
     { 
@@ -32,7 +50,10 @@
       if(!response$status_code %in% c(301L, 302L)) return(rcon)
       
       # Handle redirect
-      rcon <- redcapConnection(token=key, url=response$header$location, ...)
+      rcon <- redcapConnection(
+        token = key,
+        url   = paste0(response$header$location, '/api/'),
+        ...)
       
       # Test connection by checking version post redirect
       response <- makeApiCall(rcon, body = version,
@@ -41,13 +62,17 @@
       if(response$status_code %in% c(301L, 302L))
         stop(paste("Too many redirects from", url))
       
+
       rcon
     },
     error = function(e)
     {
-      if(grepl("Could not resolve host",     e) ||
+      if(grepl("Could not resolve host",     e)  ||
          grepl("Could not connect to server", e))
-        stop("Unable to connect to url '",url,"'. ", e$message)
+        stop("Invalid URL provided '",url,"'. Unable to resolve or route.\n", e$message)
+      
+      if(grepl("405", e$message) )
+        stop("URL '",url,"' refused connection. Not acting like a REDCap server.\n", e$message)
         
       if(grepl("403", e)) return(NULL) # Forbidden, i.e. bad API_KEY
       
@@ -112,7 +137,7 @@
     args$key <- key
     args$url <- url
     if(!is.null(config$args)) args <- utils::modifyList(args, config$args)
-    do.call(.connectAndCheck, args)
+    do.call(connectAndCheck, args)
   })
   names(dest) <- if(is.null(names(connections))) connections else names(connections)
   
@@ -135,7 +160,7 @@
     args     <- list(...)
     args$key <- conn
     args$url <- url
-    do.call(.connectAndCheck, args)
+    do.call(connectAndCheck, args)
   })
   names(dest) <- if(is.null(names(api_key_ENV))) api_key_ENV else names(api_key_ENV)
   
@@ -328,7 +353,7 @@ unlockREDCap    <- function(connections,
     conn <- NULL
     while(is.null(conn))
     {
-      conn <- .connectAndCheck(api_key, url, ...)
+      conn <- connectAndCheck(api_key, url, ...)
       if(is.null(conn))
       {
         keyring::key_delete("redcapAPI", unname(connections[i]), keyring)

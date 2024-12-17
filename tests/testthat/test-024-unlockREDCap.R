@@ -3,73 +3,82 @@ context("unlockREDCap")
 library(mockery)
 library(curl)
 
+url     <- rcon$url   # Should not be required but it is
+
+
 h <- new_handle(timeout = 1L)
 redirect <- structure(
-  list(url = "https://test.xyz/api",
+  list(url = "https://test.xyz/api/",
        status_code = 302L,
        content = "",
        headers=structure(list(
          'content-type'="text/csv; charset=utf-8",
-         'location'=url
+         'location'=gsub('\\/api\\/', '', url)
        ),
        class = c("insensitive", "list")),
   class = "response")
 )
 
 test_that(
-  ".connectAndCheck returns result of redcapConnection",
+  "connectAndCheck returns result of redcapConnection",
   {
-    stub(.connectAndCheck, "redcapConnection", rcon)
+    stub(connectAndCheck, "redcapConnection", rcon)
   
-    expect_identical(.connectAndCheck("key", "url"), rcon)
+    expect_identical(connectAndCheck("key", "url"), rcon)
   }
 )
 
 test_that(
-  ".connectAndCheck deals with redirect 301 status",
+  "connectAndCheck deals with redirect 301 status",
   {
     redirectCall <- TRUE
-    stub(.connectAndCheck, "makeApiCall", function(...)
+    redirect$status_code = 301L
+    stub(connectAndCheck, "makeApiCall", function(...)
       if(redirectCall) { redirectCall <<- FALSE; redirect  } else {makeApiCall(...)})
 
-    rcon <- .connectAndCheck(rcon$token, "https://test.xyz/api")
+    rcon <- connectAndCheck(rcon$token, "https://test.xyz/api/")
     expect_equal(rcon$url, url)
   }
 )
 
 test_that(
-  ".connectAndCheck deals with redirect 302 status",
+  "connectAndCheck deals with redirect 302 status",
   {
     redirectCall <- TRUE
-    stub(.connectAndCheck, "makeApiCall", function(...)
+    stub(connectAndCheck, "makeApiCall", function(...)
       if(redirectCall) { redirectCall <<- FALSE; redirect  } else {makeApiCall(...)})
 
-    rcon <- .connectAndCheck(rcon$token, "https://test.xyz/api")
+    rcon <- connectAndCheck(rcon$token, "https://test.xyz/api/")
     expect_equal(rcon$url, url)
   }
 )
 
 test_that(
-  ".connectAndCheck does not allow for more than one redirect",
+  "connectAndCheck does not allow for more than one redirect",
   {
-    stub(.connectAndCheck, "makeApiCall", redirect)
+    stub(connectAndCheck, "makeApiCall", redirect)
     
-    expect_error(.connectAndCheck(rcon$token, "https://test.xyz/api"))
+    expect_error(connectAndCheck(rcon$token, "https://test.xyz/api"))
   }
 )
 
 test_that(
-  ".connectAndCheck returns NULL on a 403 (Invalid KEY)",
+  "connectAndCheck returns NULL on a 403 (Invalid KEY)",
   {
-    stub(.connectAndCheck, "redcapConnection",
+    stub(connectAndCheck, "redcapConnection",
                   mock(stop("403")))
-    expect_true(is.null(.connectAndCheck("key", "url")))
+    expect_true(is.null(connectAndCheck("key", "url")))
   }
 )
 
 test_that(
-  ".connectAndCheck errors with bad url",
-  expect_error(.connectAndCheck("key", "badurl"), "Unable to connect")
+  "connectAndCheck errors with bad url",
+  expect_error(connectAndCheck("key", "badurl"), "Invalid URL provided")
+)
+
+test_that(
+  "connectAndCheck errors with valid url but not a REDCap server",
+  expect_error(connectAndCheck("key", "https://google.com"), "refused connection")
 )
 
 test_that(
@@ -99,7 +108,7 @@ test_that(
   {
     stub(.unlockYamlOverride, "file.exists", TRUE)
     stub(.unlockYamlOverride, "yaml::read_yaml", list(redcapAPI=list()))
-    stub(.unlockYamlOverride, ".connectAndCheck", TRUE)
+    stub(.unlockYamlOverride, "connectAndCheck", TRUE)
     
     expect_error(.unlockYamlOverride("TestRedcapAPI", url),
                  "does not contain required 'keys' entry")
@@ -111,7 +120,7 @@ test_that(
   {
     stub(.unlockYamlOverride, "file.exists", TRUE)
     stub(.unlockYamlOverride, "yaml::read_yaml", list(redcapAPI=list(keys=list(TestRedcapAPI=list()))))
-    stub(.unlockYamlOverride, ".connectAndCheck", TRUE)
+    stub(.unlockYamlOverride, "connectAndCheck", TRUE)
     
     expect_error(.unlockYamlOverride("TestRedcapAPI", url),
                  "does not have API_KEY for")
@@ -123,7 +132,7 @@ test_that(
   {
     stub(.unlockYamlOverride, "file.exists", TRUE)
     stub(.unlockYamlOverride, "yaml::read_yaml", list(redcapAPI=list(keys=list(TestRedcapAPI=TRUE))))
-    stub(.unlockYamlOverride, ".connectAndCheck", TRUE)
+    stub(.unlockYamlOverride, "connectAndCheck", TRUE)
     
     expect_error(.unlockYamlOverride("TestRedcapAPI", url),
                  "invalid entry")
@@ -136,7 +145,7 @@ test_that(
     stub(.unlockYamlOverride, "file.exists", TRUE)
     stub(.unlockYamlOverride, "yaml::read_yaml",
                   list(redcapAPI=list(keys=list(TestRedcapAPI='xyz', Sandbox='xyz'))))
-    stub(.unlockYamlOverride, ".connectAndCheck", TRUE)
+    stub(.unlockYamlOverride, "connectAndCheck", TRUE)
     x <- .unlockYamlOverride(c("TestRedcapAPI", "Sandbox"), url)
     expect_true(x$TestRedcapAPI)
     expect_true(x$Sandbox)
@@ -149,7 +158,7 @@ test_that(
     stub(.unlockYamlOverride, "file.exists", TRUE)
     stub(.unlockYamlOverride, "yaml::read_yaml",
                   list(redcapAPI=list(keys=list(TestRedcapAPI='xyz', Sandbox='xyz'))))
-    stub(.unlockYamlOverride, ".connectAndCheck", TRUE)
+    stub(.unlockYamlOverride, "connectAndCheck", TRUE)
     x <- .unlockYamlOverride(c(rcon="TestRedcapAPI", sand="Sandbox"), url)
     expect_true(x$rcon)
     expect_true(x$sand)
@@ -178,7 +187,7 @@ test_that(
   ".unlockENVOverride returns an entry for every connection",
   {
     stub(.unlockENVOverride, "Sys.getenv", "xyz")
-    stub(.unlockENVOverride, ".connectAndCheck", TRUE)
+    stub(.unlockENVOverride, "connectAndCheck", TRUE)
     x <- .unlockENVOverride(c("TestRedcapAPI", "Sandbox"), url)
     expect_true(x$TestRedcapAPI)
     expect_true(x$Sandbox)
@@ -189,7 +198,7 @@ test_that(
   ".unlockENVOverride returns an entry for every connection renamed as requested",
   {
     stub(.unlockENVOverride, "Sys.getenv", "xyz")
-    stub(.unlockENVOverride, ".connectAndCheck", TRUE)
+    stub(.unlockENVOverride, "connectAndCheck", TRUE)
     x <- .unlockENVOverride(c(rcon="TestRedcapAPI", sand="Sandbox"), url)
     expect_true(x$rcon)
     expect_true(x$sand)
@@ -390,7 +399,7 @@ test_that(
           c(rcon="George"), url, keyring="API_KEYs",
           passwordFUN=passwordFUN)
       },
-      .connectAndCheck = n,
+      connectAndCheck = n,
     )
 
     expect_true("rcon" %in% names(x))
@@ -398,6 +407,6 @@ test_that(
     expect_equal(calls, ifelse(Sys.getenv("CI") == "1", 2, 1)) # Called to ask once
     expect_called(m, 1) # Called key_set_with_value once
     expect_equal(mock_args(m)[[1]], list(service="redcapAPI", username="George", password="xyz", keyring="API_KEYs"))
-    expect_called(n, 1) # Called .connectAndCheck
+    expect_called(n, 1) # Called connectAndCheck
   }
 )
