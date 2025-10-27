@@ -14,10 +14,10 @@
 .curlConfig <- function(url, token)
 {
   cfg <- getOption('curl_config')
-  
+
   if(is.null(cfg)) cfg <- list(headers=list(), fields=NULL, options=list())
   if(is.null(cfg$options)) cfg$options <- list()
-   
+
   structure(list(
     method     = 'POST',
     url        = url,
@@ -25,14 +25,15 @@
     fields     = cfg$fields,
     options    = modifyList(list(timeout_ms = 3e5,
                                  useragent  = .curlDefaultUa(),
-                                 post       = TRUE),
+                                 post       = TRUE,
+                                 followlocation = FALSE),
                             cfg$options),
     auth_token = token,
     output     = structure(list(), class = c("write_memory", "write_function"))
   ), class = "request")
 }
 
-.curlMergeConfig <- function(x, 
+.curlMergeConfig <- function(x,
                              y)
 {
   if(!is.null(y))
@@ -54,7 +55,7 @@
 
 as.character.form_file <- function(x, ...) x
 
-.curlContent <- function(x, 
+.curlContent <- function(x,
                          type = 'text/plain',
                          ...)
 {
@@ -76,8 +77,8 @@ as.character.form_file <- function(x, ...) x
            'ISO-8859-1' # [Default if unspecified](https://www.w3.org/International/articles/http-charset/index)
          }
   x <- iconv(readBin(raw, character()), from = enc, to = 'UTF-8', '\U25a1')
-  if(grepl('\U25a1', x)) warning("Project contains invalid characters. Mapped to '\U25a1'.")
-  
+  if(grepl('\U25a1', x)) logWarning("Project contains invalid characters. Mapped to '\U25a1'.")
+
   if(type == 'text/csv')
   {
     utils::read.csv(x, ...)
@@ -95,15 +96,15 @@ as.character.form_file <- function(x, ...) x
 {
   h    <- curl::new_handle()
   body <- .curlCompact(body)
-  
+
   # Argument Validation ---------------------------------------------
   coll <- checkmate::makeAssertCollection()
-  checkmate::assert_list(x = body, 
+  checkmate::assert_list(x = body,
                          names = "named",
                          add = coll)
   checkmate::reportAssertions(coll)
 
-  flds <- lapply(body, function(x) 
+  flds <- lapply(body, function(x)
   {
     if(inherits(x, 'list') || inherits(x, 'character'))
     {
@@ -113,7 +114,7 @@ as.character.form_file <- function(x, ...) x
       as.character(x)
     }
   })
-  
+
   config$fields <- c(flds, config$fields)
 
   curl::handle_setopt(h, .list = config$options)
