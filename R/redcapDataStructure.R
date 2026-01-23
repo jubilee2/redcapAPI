@@ -30,7 +30,8 @@ validateRedcapData <- function(data, redcap_data){
   in_structure_and_not_data <- setdiff(names(redcap_data),
                                        names(data))
 
-  if (length(in_structure_and_not_data) > 0){
+  if (length(in_structure_and_not_data) > 0)
+  {
     logWarning("The following names in the REDCap data structure are not in 'data'. \n",
             "Downstream functions may not operate as expected. {",
             paste0(in_structure_and_not_data, collapse = ", "), "}\n")
@@ -233,7 +234,10 @@ REDCAP_METADATA_VALIDATION_TYPE <- c(
 # Project Information -----------------------------------------------
 # Project Information Structure
 
-REDCAP_PROJECT_INFORMATION_STRUCTURE <-
+# REDCAP_PROJECT_INFORMATION_STRUCTURE <-
+redcapProjectInformationStructure <-
+function(version)
+{
   data.frame(project_id = character(0),
              project_title = character(0),
              creation_time = character(0),
@@ -256,11 +260,13 @@ REDCAP_PROJECT_INFORMATION_STRUCTURE <-
              project_grant_number = character(0),
              project_pi_firstname = character(0),
              project_pi_lastname = character(0),
+             project_pi_email = if(is.null(version) || utils::compareVersion(version, "15.8.2") < 0) NULL else character(0),
              display_today_now_button = character(0),
              missing_data_codes = character(0),
              external_modules = character(0),
              bypass_branching_erase_field_prompt = character(0),
              stringsAsFactors = FALSE)
+}
 
 # This is the list of fields recognized for updates in importProjectInformation
 
@@ -281,6 +287,7 @@ PROJECT_INFO_FIELDS_EDITABLE <-
     "project_grant_number",
     "project_pi_firstname",
     "project_pi_lastname",
+    "project_pi_email",
     "display_today_now_button",
     "bypass_branching_erase_field_prompt")
 
@@ -316,6 +323,7 @@ redcapUserStructure <- function(version)
              expiration = as.POSIXct(character(0)),
              data_access_group = character(0),
              data_access_group_id = character(0),
+             data_access_group_label = if(is.null(version) || utils::compareVersion(version, "16.0.0") < 0) NULL else character(0),
              design = character(0),
              alerts = character(0),
              user_rights = character(0),
@@ -331,6 +339,7 @@ redcapUserStructure <- function(version)
              file_repository = character(0),
              data_quality_create = character(0),
              data_quality_execute = character(0),
+             data_quality_resolution = character(0),
              api_export = character(0),
              api_import = character(0),
              api_modules=if(is.null(version) || utils::compareVersion(version, "14.0.3") < 0) NULL else character(0),
@@ -356,7 +365,7 @@ REDCAP_USER_TABLE_ACCESS_VARIABLES <-
   c("design",
     "alerts",
     "user_rights",
-    "data_access_group",
+    "data_access_groups",
     "reports",
     "stats_and_charts",
     "manage_survey_participants",
@@ -370,6 +379,7 @@ REDCAP_USER_TABLE_ACCESS_VARIABLES <-
     "data_quality_execute",
     "api_export",
     "api_import",
+    "api_modules",
     "mobile_app",
     "mobile_app_download_data",
     "record_create",
@@ -391,6 +401,7 @@ redcapUserRoleStructure <- function(version)
   data.frame(unique_role_name = character(0),
              role_label = character(0),
              design = character(0),
+             alerts = character(0),
              user_rights = character(0),
              data_access_groups = character(0),
              # data_export = character(0),
@@ -405,8 +416,10 @@ redcapUserRoleStructure <- function(version)
              file_repository = character(0),
              data_quality_create = character(0),
              data_quality_execute = character(0),
+             data_quality_resolution = character(0),
              api_export = character(0),
              api_import = character(0),
+             api_modules = if(is.null(version) || utils::compareVersion(version, "14.0.3") < 0) NULL else character(0),
              mobile_app = character(0),
              mobile_app_download_data = character(0),
              record_create = character(0),
@@ -451,11 +464,18 @@ REDCAP_USER_ROLE_TABLE_ACCESS_VARIABLES <-
     "record_delete",
     "lock_records_customization",
     "lock_records",
-    "lock_records_all_forms")
+    "lock_records_all_forms",
+    "random_setup",
+    "random_dashboard",
+    "random_perform")
 
 # User-Role Assignment Structure
 
-REDCAP_USER_ROLE_ASSIGNMENT_STRUCTURE <-
+# REDCAP_USER_ROLE_ASSIGNMENT_STRUCTURE <-
+redcapUserRoleAssignmentStructure <- function(version)
+{
   data.frame(username = character(0),
              unique_role_name = character(0),
+             data_access_group = if(is.null(version) || utils::compareVersion(version, "15.8.2") < 0) NULL else character(0),
              stringsAsFactors = FALSE)
+}

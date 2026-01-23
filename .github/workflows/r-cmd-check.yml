@@ -24,7 +24,9 @@ jobs:
       - uses: r-lib/actions/setup-tinytex@v2
       - name: Install additional LaTeX packages
         run: |
-          tlmgr install pdfpages pdflscape
+          tlmgr option repository https://mirror.ctan.org/systems/texlive/tlnet
+          tlmgr update --self
+          tlmgr install pdfpages pdflscape ae
           tlmgr list --only-installed
           tlmgr --version
       - uses: r-lib/actions/setup-r@v2

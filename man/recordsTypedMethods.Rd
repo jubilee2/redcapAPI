@@ -40,8 +40,8 @@ exportReportsTyped(rcon, report_id, ...)
   filter_empty_rows = TRUE,
   warn_zero_coded = TRUE,
   ...,
-  csv_delimiter = ",",
-  batch_size = NULL
+  csv_delimiter = rcon$csv_delimiter(),
+  batch_size = 100L
 )
 
 \method{exportRecordsTyped}{redcapOfflineConnection}(
@@ -150,7 +150,7 @@ HTML and UNICODE raw label and scanning for units=\{"UNITS"\} in description}
 \item{filter_empty_rows}{\code{logical(1)}. Filter out empty rows post retrieval.
 Defaults to \code{TRUE}.}
 
-\item{csv_delimiter}{\code{character}. One of \code{c(",", "\\t", ";", "|", "^")}. Designates the
+\item{csv_delimiter}{\code{character}. One of \code{c(",", ";", "\\t", " ", "|", "^")}. Designates the
 delimiter for the CSV file received from the API.}
 
 \item{batch_size}{\code{integerish(1)} or \code{NULL}. When \code{NULL},

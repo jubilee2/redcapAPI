@@ -47,9 +47,17 @@ exportRecordsTyped.redcapApiConnection <-
     filter_empty_rows = TRUE,
     warn_zero_coded = TRUE,
     ...,
-    csv_delimiter  = ",",
-    batch_size     = NULL)
+    csv_delimiter  = rcon$csv_delimiter(),
+    batch_size     = 100L)
 {
+  logEvent("INFO", call='exportRecordsTyped',
+           redcap_title=rcon$project()$project_title,
+           fields=fields, drop_fields=drop_fields, forms=forms,
+           records=records,events=events,survey=survey,dag=dag,
+           date_begin=date_begin, date_end=date_end,
+           filter_empty_rows=filter_empty_rows,
+           batch_size=batch_size)
+
   if (is.numeric(records)) records <- as.character(records)
 
    ###########################################################################
@@ -104,7 +112,7 @@ exportRecordsTyped.redcapApiConnection <-
                                add = coll)
 
   csv_delimiter <- checkmate::matchArg(x         = csv_delimiter,
-                                       choices   = c(",", "\t", ";", "|", "^"),
+                                       choices   = c(",", ";", "\t", " ", "|", "^"),
                                        .var.name = "csv_delimiter",
                                        add = coll)
 
@@ -640,7 +648,14 @@ exportRecordsTyped.redcapOfflineConnection <- function(rcon,
   response <- makeApiCall(rcon,
                           body = c(body,
                                    vectorToApiBodyList(records, "records")),
+                          log=FALSE,
                           ...)
+  logEvent("INFO", call='.exportRecordsTyped_Unbatched',
+           status=response$status_code,
+           records=records,
+           body=body)
+  logEvent("DEBUG", call='.exportRecordsTyped_Unbatched',
+           response=response) # response has PHI/PII
 
   response <- as.data.frame(response,
                             colClasses = "character",
@@ -667,10 +682,16 @@ exportRecordsTyped.redcapOfflineConnection <- function(rcon,
     record_response <- makeApiCall(rcon,
                                    body = c(list(content = "record",
                                                  format = "csv",
-                                                 outputFormat = "csv"),
+                                                 outputFormat = "csv",
+                                                 csvDelimiter = rcon$csv_delimiter()),
                                             vectorToApiBodyList(target_field,
                                                                 "fields")),
+                                   log=FALSE,
                                    ...)
+    logEvent("INFO", call='.exportRecordsTyped_Batched',
+             status=record_response$status_code,
+             body=body,
+             response=as.character(record_response))
 
     records <- as.data.frame(record_response, sep = csv_delimiter)
 
