@@ -6,6 +6,8 @@
 * `exportUsers` properly handles the columns random_setup, random_dashboard and random_perform.
 * `importUsers` and `exportUsers` weren't handling data_access_group assignment properly.
 * `exportUserRoles` now avoids errors when user role access columns are missing from export responses.
+* `exportFileRepositoryListing` returns a data.frame with 6 columns (was 4) from REDCap version 16.0.8 and up.
+* `unlockREDCap` upstream dependency on shelter now default to 'SHELTER_' prefix when looking for ENV variable overrides.
 
 ## DEPRECATION NOTICES
 
